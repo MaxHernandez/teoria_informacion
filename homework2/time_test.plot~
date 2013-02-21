@@ -1,0 +1,5 @@
+set xlabel 'Pattern length'
+set ylabel 'Text length'
+set zlabel 'time running'
+set logscale
+splot "test.dat" using 1:2:3 with dots, 'test.dat' using 1:2:4 with dots;
