@@ -1,0 +1,165 @@
+#! /usr/bin/python
+# -*- coding: latin-1 -*-
+from sys import argv, getsizeof
+from subprocess import call
+import pygraphviz
+
+class Huffman:
+
+    def get_frequency(self, text):
+        frequency = dict()
+        for i in text:
+            if i in frequency:
+                frequency[i] += 1
+            else:
+                frequency[i] = 1.0
+        return frequency
+
+    def sort(self, frequency):
+        res = list()
+        for i in range(len(frequency.keys())):
+            values = frequency.keys()
+            min_value = (values[0], frequency[values[0]], 0)
+            for j in range(len(values)):
+                if frequency[values[j]] < min_value[1]:
+                    min_value = (values[j], frequency[values[j]], j)
+            res.append( [min_value[0], frequency.pop(min_value[0]), -1, ''] )
+        return res
+
+    def calculate_nodes(self, n):
+        res = 0
+        res += n
+        while n > 1:
+            if n % 2 == 0:
+                res += (n/2)
+                n /= 2
+            else:
+                res += ((n-1)/2)
+                n = ((n-1)/2) + 1
+        return res
+
+
+    def build_tree(self, frequency):
+        # write graph
+        Tree = pygraphviz.AGraph(directed=True, strict=True)
+
+        number_nodes = self.calculate_nodes(len(frequency))        
+        graph = [[0]*number_nodes for i in range(number_nodes)]
+        graph_guide = dict()
+        chars_positions = dict()
+        used_positions = -1
+
+        while len(frequency) > 1:
+            suma = frequency[0][1] + frequency[1][1]
+            nodo = [str(suma), suma, used_positions+1, '']
+            graph_guide[used_positions+1] = nodo
+            used_positions += 1
+
+            #Hacer arbol aqui
+            subnodo1 = frequency[0]
+            subnodo2 = frequency[1]
+            subnodo1[3] = '0'
+            subnodo2[3] = '1'
+
+            if subnodo1[2] == -1:
+                subnodo1[2] = used_positions+1
+                graph_guide[used_positions+1] = subnodo1
+                used_positions += 1
+                chars_positions[subnodo1[0]] = subnodo1[2]
+
+            if subnodo2[2] == -1:
+                subnodo2[2] = used_positions+1
+                graph_guide[used_positions+1] = subnodo2
+                used_positions += 1
+                chars_positions[subnodo2[0]] = subnodo2[2]
+
+            ################################
+            nodo[0] += '('+str(nodo[2])+')'
+            Tree.add_edge(subnodo1[0], nodo[0], color = 'blue', label = '1')
+            Tree.add_edge(subnodo2[0], nodo[0], label = '0')
+
+#            print subnodo1, "->", nodo
+#            print subnodo2, "->", nodo
+
+            graph[subnodo1[2]][nodo[2]] = 1
+            graph[nodo[2]][subnodo1[2]] = 1
+            graph[subnodo2[2]][nodo[2]] = 1
+            graph[nodo[2]][subnodo2[2]] = 1
+
+            frequency = frequency[2:]
+            length = len(frequency)
+            if length == 0:
+                frequency.append(nodo)
+            else:
+                for i in range(length):
+                    if frequency[i][1] > nodo[1]:
+                        frequency.insert(nodo, i-1)
+                        break
+                    if i == length-1:
+                        frequency.append(nodo)
+
+        #To save the tree graph and create an ps file
+        Tree.layout(prog='dot')
+        Tree.write('output.dot')
+        call(['dot', '-Tps', 'output.dot', '-o', 'output.ps'])
+
+        return graph, chars_positions, graph_guide
+
+    def get_connections(self, graph, pos):
+        con = list()
+        for j in range(len(graph[pos])):
+            if graph[pos][j] == 1:
+                con.append(j)
+        return con
+
+    def build_encoding_dictionary(self, graph, basic_chars, graph_guide):
+        encoding_dictionary = dict()
+        for i in basic_chars.keys():
+            pos = basic_chars[i]
+            char = graph_guide[pos][3]
+            while False is not True:
+                con = self.get_connections(graph, pos)
+                print con
+                raw_input("")
+                pos = j
+                char += graph_guide[j][3]
+                break
+
+                if j == len(graph[pos])-1:
+                    break
+            encoding_dictionary[i] = char[::-1]
+        return encoding_dictionary
+
+    def encode(self, text):
+        frequency = self.get_frequency(text)
+        frequency = self.sort(frequency)
+        graph, chars_positions, graph_guide = self.build_tree(frequency)
+        encoding = self.build_encoding_dictionary(graph, chars_positions, graph_guide)
+        res = ''
+        for i in text:
+            res += encoding[i]
+
+        return res, graph, chars_positions
+        
+
+    def decode(self, text, graph, chars_pos):
+        length = len(text)
+        text_pos = 0
+        graph_pos = length - 1
+        encoded = ''
+#        while text_pos < length:
+            
+
+def main():
+    h = Huffman()
+    text = 'Huffman'
+
+    encoded, dictionary, chars_pos = h.encode(text)
+    print 'Encoding dictionary:', dictionary
+    print 'Original text:', text
+    print 'Encoded text:', encoded
+    print 'Compression ratio (compressed / original):', (float(len(encoded)) / (getsizeof(text[0])*len(text)*8) )
+
+    decoded_text =  h.decode(encoded, graph, chars_pos)
+
+main()

@@ -15,7 +15,8 @@ def boyer_moore(string, pattern):
     i = length_pattern - 1# for the string
     j = length_pattern - 1# for the pattern
     shift = 0
-    while i < length_string:
+    while i <= length_string - length_pattern:
+        print len(string), len(pattern), i, j
         if string[i] == pattern[j]:
             shift += 1
             i -= 1
@@ -101,8 +102,8 @@ def test(max_chars, fl='time_test.dat'):
     fl.close()
 
 def main():
-    string = "no cantar"
-    pattern = "cantar"
+    string = "anita lava la tina"
+    pattern = "lava"
     print 'Boyer-Moore'
     print "String:", string
     print "Pattern:", pattern
@@ -113,5 +114,5 @@ def main():
     print "Pattern:", pattern
     print "Position:", kmp(string, pattern) 
 
-main()
-#test(500)
+#main()
+test(500)

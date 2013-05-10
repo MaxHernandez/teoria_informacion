@@ -1,0 +1,10 @@
+#!/usr/bin/python
+
+class LZW:
+
+    def start():
+
+def main():
+
+
+main()
